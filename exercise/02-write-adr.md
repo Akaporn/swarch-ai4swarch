@@ -35,10 +35,10 @@ language: Thai
 
 | เกณฑ์ | Run a | Run b |
 |---|---|---|
-| ใช้ตัวเลขจาก scenario หรือไม่ (latency, ช่วงพีก, ข้อจำกัดของ MailFast) | | |
-| ทางเลือกที่พิจารณา (ระบุ) | | |
-| จัดการแต้มสะสมแบบ "ครั้งเดียวเท่านั้น" และ rate limit ของ MailFast หรือไม่ อย่างไร | | |
-| มีสิ่งที่แต่งขึ้นเองหรือไม่ (ตัวเลข เครื่องมือ หรือข้อเท็จจริงที่ไม่มีใน scenario) | | |
+| ใช้ตัวเลขจาก scenario หรือไม่ (latency, ช่วงพีก, ข้อจำกัดของ MailFast) | ไม่ใช้ | ใช้ครบ |
+| ทางเลือกที่พิจารณา (ระบุ) | มี 3 ตัวเลือก (sync / goroutine / broker แบบไม่ระบุยี่ห้อ) | มี 4 ตัวเลือก (เพิ่มการแยก RabbitMQ กับ Kafka) |
+| จัดการแต้มสะสมแบบ "ครั้งเดียวเท่านั้น" และ rate limit ของ MailFast หรือไม่ อย่างไร | พูดถึง idempotency แบบทั่วไป | ใช้ order_id เป็น dedupe key และจำกัดอัตราที่ 50/s |
+| มีสิ่งที่แต่งขึ้นเองหรือไม่ (ตัวเลข เครื่องมือ หรือข้อเท็จจริงที่ไม่มีใน scenario) | ไม่แต่งตัวเลข ใช้ "TBD" และ "Not evidenced" แทน (RabbitMQ และ Kafka ยกมาเป็นแค่ตัวอย่าง) | ไม่แต่งตัวเลขของ scenario แต่ระบุว่า emailservice เป็น Go ซึ่งผิด (จริงๆ เป็น Python และไม่อยู่ใน context ที่ให้) และเลือกรายละเอียดเองโดยไม่ได้บอกว่าเป็นการเลือก เช่น RabbitMQ 3 node, quorum queue, PodDisruptionBudget |
 
 ## รับผิดชอบ ADR ฉบับสุดท้ายของตัวเอง
 
@@ -51,6 +51,7 @@ language: Thai
 
 | # | สิ่งที่เปลี่ยนจากร่างของ AI | เหตุผล |
 |---|---|---|
-| 1 | | |
-| 2 | | |
-| 3 | | |
+| 1 | เปลี่ยนจาก retry buffer ใน memory เป็น transactional outbox (เพิ่ม datastore ให้ `checkoutservice` และ relay ส่งไป RabbitMQ) และลบ Open question ข้อ 4 | buffer ใน memory หายเมื่อ pod crash ทำให้ลูกค้าไม่ได้ loyalty points ซึ่งขัดกับข้อกำหนด exactly once |
+| 2 | ใช้ `emailservice` เดิมเป็น consumer ของ queue แทนการสร้าง "email worker" ใหม่ และแก้ภาษาให้ถูกต้อง และลบ Open question ข้อ 8 | R-12 ระบุให้แทน logic mock ใน `emailservice` ไม่ใช่สร้าง service ใหม่ และ AI ระบุภาษาว่า Go ซึ่งผิด (เป็น Python ตาม Task 1) |
+| 3 | กำหนด timeout เป็น 100 ms แทน "timeout สั้น" | p95 ของ `PlaceOrder` ต้อง ≤ 500 ms และปัจจุบันประมาณ 300 ms จึงเหลือ budget ประมาณ 200 ms ถ้าไม่มีตัวเลขก็ทดสอบไม่ได้ |
+
